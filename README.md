@@ -1,212 +1,139 @@
-# MCP Server Starter Template
+# MCP-Coinglass: Model Context Protocol Server for CoinGlass API v4
 
-A minimal starter template for building Model Context Protocol (MCP) servers using TypeScript and FastMCP.
+This project implements a Model Context Protocol (MCP) server for the CoinGlass API (v4). It lets MCP-compatible clients (AI assistants, IDE extensions, or custom apps) access futures market analytics such as Open Interest, Liquidations, Long/Short Ratio, and Funding Rates.
 
-## Features
+Built with TypeScript and fastmcp.
 
-* Basic project structure with `src/lib`, `src/services`, `src/tools`.
-* TypeScript setup (compiles to `dist/`).
-* Biome for linting and formatting.
-* `fastmcp` for MCP server implementation.
-* A weather service example demonstrating:
-  * Proper folder structure (lib, services, tools)
-  * API integration with error handling
-  * Parameter validation using Zod
-  * Separation of concerns
-* GitHub Actions workflows for CI and Release (manual trigger by default).
+## Features (MCP Tools)
 
-## Getting Started
+The server exposes the following tools that MCP clients can call:
 
-1. **Create a new repository from this template:**
-   Click [here](https://github.com/new?template_name=mcp-server-starter&template_owner=IQAIcom) to generate a new repository from this template.
+- COINGLASS_OPEN_INTEREST: Open interest exchange list for a symbol; optional history
+  - Parameters: symbol (string), exchange? (string), includeHistory? (boolean), period? ("1h" | "4h" | "12h" | "24h")
+- COINGLASS_LIQUIDATIONS: Liquidation snapshot for a futures pair
+  - Parameters: symbol (string), exchange? (string), timeframe? ("5m" | "15m" | "1h" | "4h" | "12h" | "24h")
+- COINGLASS_LONG_SHORT_RATIO: Global account long/short ratio snapshot
+  - Parameters: symbol (string), exchange? (string), period? ("1h" | "4h" | "12h" | "24h")
+- COINGLASS_FUNDING_RATE: Current funding rate across exchanges
+  - Parameters: symbol (string), exchange? (string)
 
-2. **Navigate to your new project:**
+All tools return a concise human-readable summary followed by a JSON payload for programmatic consumption.
 
-    ```bash
-    cd /path/to/your-new-mcp-server
-    ```
+## Prerequisites
 
-3. **Initialize Git Repository (if not already):**
+- Node.js v20+ (CI uses Node 22)
+- pnpm (https://pnpm.io/installation)
 
-    ```bash
-    git init
-    git branch -M main # Or your preferred default branch name
-    ```
+## Installation
 
-4. **Customize `package.json`:**
-    * Update `name`, `version`, `description`, `author`, `repository`, etc.
-    * Update the `bin` entry if you change the command name.
+There are a few ways to run mcp-coinglass:
 
-5. **Install dependencies:**
+1) Using pnpm dlx (recommended for most MCP client setups)
 
-    ```bash
-    pnpm install
-    ```
+Run the published package directly without a global install. See the MCP client config example below.
 
-6. **Configure environment variables:**
-   For the weather service example, you'll need an OpenWeather API key:
-
-   ```bash
-   # Create a .env file (add to .gitignore)
-   echo "OPENWEATHER_API_KEY=your_api_key_here" > .env
-   ```
-
-   Get an API key from [OpenWeather](https://openweathermap.org/api).
-
-7. **Initial Commit:**
-    It's a good idea to make an initial commit at this stage before setting up Husky and Changesets.
-
-    ```bash
-    git add .
-    git commit -m "feat: initial project setup from template"
-    ```
-
-8. **Develop your server:**
-    * Add your custom tools in the `src/tools/` directory.
-    * Implement logic in `src/lib/` and `src/services/`.
-    * Register tools in `src/index.ts`.
-
-## Example Weather Tool
-
-This template includes a weather service example that demonstrates:
-
-1. **HTTP Utilities** (`src/lib/http.ts`):
-   * Type-safe HTTP requests with Zod validation
-   * Error handling
-
-2. **Configuration** (`src/lib/config.ts`):
-   * Environment variable management
-   * Service configuration
-
-3. **Weather Service** (`src/services/weatherService.ts`):
-   * API integration
-   * Data transformation
-   * Proper error propagation
-
-4. **Weather Tool** (`src/tools/weather.ts`):
-   * Parameter validation with Zod
-   * User-friendly output formatting
-   * Error handling and user guidance
-
-To use the weather tool:
+2) Global installation from npm (via pnpm)
 
 ```bash
-# Set your OpenWeather API key
-export OPENWEATHER_API_KEY=your_api_key_here
-
-# Run the server
-pnpm run start
-
-# Connect with an MCP client and use the GET_WEATHER tool
-# with parameter: { "city": "London" }
+pnpm add -g mcp-coinglass
 ```
 
-## Pre-commit Linting (Husky & lint-staged)
+3) Building from source (development)
 
-This template includes `husky` and `lint-staged` in its `devDependencies` for running Biome on staged files before committing. To set it up:
+```bash
+pnpm install
+pnpm run build
+pnpm run start
+```
 
-1. **Ensure your package.json has the prepare script for husky:**
+## Configuration (Environment Variables)
 
-   ```json
-   {
-     "scripts": {
-       "prepare": "husky"
-     }
-   }
-   ```
+This server requires a CoinGlass API key. All CoinGlass v4 endpoints require the CG-API-KEY header. Generate your API key from your account dashboard and supply it via environment variables. References:
 
-2. **Install dependencies and initialize husky:**
+- Authentication docs: https://docs.coinglass.com/reference/authentication
+- Account/API key dashboard: https://www.coinglass.com/account
 
-   ```bash
-   pnpm install
-   pnpm dlx husky init
-   ```
+Create a .env file (or configure env in your MCP client) with:
 
-   This creates a `.husky` directory with the necessary setup.
+```bash
+COINGLASS_API_KEY=your_api_key_here
+```
 
-3. **Create the pre-commit hook for lint-staged:**
+An .env.sample file is included as a reference; copy it to .env and fill in your key.
 
-   ```bash
-   # Create or edit the pre-commit file
-   echo '#!/usr/bin/env sh' > .husky/pre-commit
-   echo '. "$(dirname -- "$0")/_/husky.sh"
-   
-   pnpm lint-staged' >> .husky/pre-commit
-   
-   # Make it executable
-   chmod +x .husky/pre-commit
+## Running the Server with an MCP Client
 
-   ```
+MCP clients (assistants, IDE extensions) run this server as a background process. Configure your client with a server entry similar to the following.
 
-4. **Configure `lint-staged` in `package.json`:**
-   ```json
-   // In package.json
-   "lint-staged": {
-     "*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc}": [
-       "biome check --write --organize-imports-enabled=false --no-errors-on-unmatched"
-     ]
-   }
-   ```
+Using pnpm dlx:
 
-   *Adjust the Biome command as needed. The one above is a common example.*
+```json
+{
+  "mcpServers": {
+    "coinglass-mcp-server": {
+      "command": "pnpm",
+      "args": ["dlx", "mcp-coinglass"],
+      "env": {
+        "COINGLASS_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
 
-5. **Test it:**
-   Stage some changes to a `.ts` file and try to commit. Biome should run on the staged file.
+If globally installed (pnpm add -g mcp-coinglass):
 
-## Release Management (Changesets)
+```json
+{
+  "mcpServers": {
+    "coinglass-mcp-server": {
+      "command": "mcp-coinglass",
+      "args": [],
+      "env": {
+        "COINGLASS_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
 
-This template is ready for release management using [Changesets](https://github.com/changesets/changesets).
+## Example Tool Invocations
 
-1. **Install Changesets CLI (if not already in devDependencies):**
-    The template `package.json` should include `@changesets/cli`. If not:
+MCP clients pass JSON parameters to tools. Examples:
 
-    ```bash
-    pnpm add -D @changesets/cli
-    ```
+```json
+{ "tool": "COINGLASS_OPEN_INTEREST", "params": { "symbol": "BTC", "includeHistory": true, "period": "24h" } }
+```
 
-2. **Initialize Changesets:**
-    This command will create a `.changeset` directory with some configuration files.
+```json
+{ "tool": "COINGLASS_LIQUIDATIONS", "params": { "symbol": "BTCUSDT", "timeframe": "4h" } }
+```
 
-    ```bash
-    pnpm changeset init
-    # or npx changeset init
-    ```
+```json
+{ "tool": "COINGLASS_LONG_SHORT_RATIO", "params": { "symbol": "ETH", "period": "1h" } }
+```
 
-    Commit the generated `.changeset` directory and its contents.
+```json
+{ "tool": "COINGLASS_FUNDING_RATE", "params": { "symbol": "SOL" } }
+```
 
-3. **Adding Changesets During Development:**
-    When you make a change that should result in a version bump (fix, feature, breaking change):
+## Scripts
 
-    ```bash
-    pnpm changeset add
-    # or npx changeset add
-    ```
+- pnpm run build: Compile TypeScript to dist/ and make output executable
+- pnpm run start: Run the built server over stdio (for MCP)
+- pnpm run lint: Lint via Biome
+- pnpm run format: Format via Biome
 
-    Follow the prompts. This will create a markdown file in the `.changeset` directory describing the change.
-    Commit this changeset file along with your code changes.
+## Endpoint References (v4)
 
-4. **Publishing a Release:**
-    The GitHub Actions workflow `release.yml` (in `mcp-server-starter/.github/workflows/`) is set up for this. When you are ready to release:
-    * Ensure all feature PRs with their changeset files are merged to `main`.
-    * **Important:** Before publishing, ensure your `package.json` is complete. Add or update fields like `keywords`, `author`, `repository` (e.g., `"repository": {"type": "git", "url": "https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git"}`), `bugs` (e.g., `"bugs": {"url": "https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/issues"}`), and `homepage` (e.g., `"homepage": "https://github.com/YOUR_USERNAME/YOUR_REPO_NAME#readme"`) for better discoverability and information on npm.
-    * The `release.yml` workflow (manually triggered by default in the template) will:
-        1. Run `changeset version` to consume changeset files, update `package.json` versions, and update `CHANGELOG.md`. It will push these to a `changeset-release/main` branch and open a "Version Packages" PR.
-        2. **Merge the "Version Packages" PR.**
-        3. Upon merging, the workflow runs again on `main`. This time, it will run `pnpm run publish-packages` (which should include `changeset publish`) to publish to npm and create GitHub Releases/tags.
-    * **To enable automatic release flow:** Change `on: workflow_dispatch` in `release.yml` to `on: push: branches: [main]` (or your release branch).
+This server calls these REST endpoints:
 
-## Available Scripts
+- Open Interest Exchange List: GET /api/futures/open-interest/exchange-list
+- Open Interest History (OHLC): GET /api/futures/open-interest/history
+- Liquidations History: GET /api/futures/liquidation/history
+- Global Long/Short Account Ratio History: GET /api/futures/global-long-short-account-ratio/history
+- Funding Rate Exchange List: GET /api/futures/funding-rate/exchange-list
 
-* `pnpm run build`: Compiles TypeScript to JavaScript in `dist/` and makes the output executable.
-* `pnpm run dev`: Runs the server in development mode using `tsx` (hot-reloading for TypeScript).
-* `pnpm run start`: Runs the built server (from `dist/`) using Node.
-* `pnpm run lint`: Lints the codebase using Biome.
-* `pnpm run format`: Formats the codebase using Biome.
+Refer to the official docs for authentication and rate limits:
 
-## Using the Server
-
-After building (`pnpm run build`), you can run the server:
-
-* Directly if linked or globally installed: `mcp-hello-server` (or your customized bin name).
-* Via node: `node dist/index.js`
-* Via `pnpm dlx` (once published): `pnpm dlx your-published-package-name`
+- https://docs.coinglass.com/reference/authentication
