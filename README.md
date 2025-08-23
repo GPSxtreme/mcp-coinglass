@@ -15,7 +15,7 @@ The server exposes the following tools that MCP clients can call:
 - COINGLASS_FUNDING_RATE: Current funding rate across exchanges
   - Parameters: symbol (string), exchange? (string)
 
-All tools return a concise human-readable summary followed by a JSON payload for programmatic consumption.
+Tool call responses always return a success code even in case of api errors. In case of error tool response includes the raw api response.
 
 ## Prerequisites
 
@@ -42,6 +42,14 @@ pnpm add -g mcp-coinglass
 pnpm install
 pnpm run build
 pnpm run start
+```
+
+4) For testing and development purposes use mcp inspector
+
+```bash
+# in the project root run,
+pnpm run build
+npx @modelcontextprotocol/inspector node dist/index.js
 ```
 
 ## Configuration (Environment Variables)
