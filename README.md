@@ -58,6 +58,7 @@ COINGLASS_API_KEY=your_api_key_here
 ```
 
 An .env.sample file is included as a reference; copy it to .env and fill in your key.
+
 **NOTE: All the available tools require an upgraded coinglass api plan to work**
 
 ## Running the Server with an MCP Client
