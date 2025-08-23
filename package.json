@@ -5,6 +5,11 @@
 	"main": "dist/index.js",
 	"type": "module",
 	"author": "GPSxtreme",
+	"keywords": [
+		"mcp server",
+		"coinglass",
+		"modelcontextprotocol"
+	],
 	"license": "MIT",
 	"bin": {
 		"mcp-coinglass": "dist/index.js"
