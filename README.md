@@ -1,8 +1,6 @@
-# MCP-Coinglass: Model Context Protocol Server for CoinGlass API v4
+# MCP-Coinglass
 
 This project implements a Model Context Protocol (MCP) server for the CoinGlass API (v4). It lets MCP-compatible clients (AI assistants, IDE extensions, or custom apps) access futures market analytics such as Open Interest, Liquidations, Long/Short Ratio, and Funding Rates.
-
-Built with TypeScript and fastmcp.
 
 ## Features (MCP Tools)
 
@@ -60,6 +58,7 @@ COINGLASS_API_KEY=your_api_key_here
 ```
 
 An .env.sample file is included as a reference; copy it to .env and fill in your key.
+**NOTE: All the available tools require an upgraded coinglass api plan to work**
 
 ## Running the Server with an MCP Client
 

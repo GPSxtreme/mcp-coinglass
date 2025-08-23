@@ -1,9 +1,11 @@
 {
 	"name": "mcp-coinglass",
-	"version": "0.0.1",
+	"version": "0.0.0",
 	"description": "An MCP server for communicating with Coinglass platform via coinglass API",
 	"main": "dist/index.js",
 	"type": "module",
+	"author": "GPSxtreme",
+	"license": "MIT",
 	"bin": {
 		"mcp-coinglass": "dist/index.js"
 	},
@@ -39,6 +41,14 @@
 		"shx": "^0.3.4",
 		"typescript": "^5.9.2"
 	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/GPSxtreme/mcp-coinglass.git"
+	},
+	"bugs": {
+		"url": "https://github.com/GPSxtreme/mcp-coinglass/issues"
+	},
+	"homepage": "https://github.com/GPSxtreme/mcp-coinglass#readme",
 	"lint-staged": {
 		"*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
 			"biome check --write --no-errors-on-unmatched"
