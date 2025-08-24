@@ -2,11 +2,23 @@
 import dedent from "dedent";
 import { z } from "zod";
 import { CoinglassService } from "../services/coinglass-service.js";
+import type { GlobalAccountRatioPoint } from "../types/long-short-ratio.js";
 
 const paramsSchema = z.object({
-	symbol: z.string().min(1),
-	exchange: z.string().optional(),
-	period: z.enum(["1h", "4h", "12h", "24h"]).default("24h").optional(),
+	symbol: z.string().min(1).describe("Trading pair, e.g., BTCUSDT or BTC"),
+	exchange: z.string().optional().describe("Futures exchange, e.g., Binance"),
+	period: z
+		.enum(["1h", "4h", "12h", "24h"])
+		.default("24h")
+		.optional()
+		.describe("Aggregation period: 1h, 4h, 12h, 24h (maps to 1h/4h/12h/1d)"),
+	prettyFormat: z
+		.boolean()
+		.default(true)
+		.optional()
+		.describe(
+			"When true (default), returns a human-readable summary; when false, returns raw API-shaped data.",
+		),
 });
 
 type Params = z.infer<typeof paramsSchema>;
@@ -19,9 +31,7 @@ export const longShortRatioTool = {
 	execute: async (params: Params) => {
 		try {
 			const svc = new CoinglassService();
-			const symbol = params.symbol.endsWith("USDT")
-				? params.symbol
-				: `${params.symbol.toUpperCase()}USDT`;
+			const symbol = params.symbol.toUpperCase();
 			const intervalMap: Record<string, string> = {
 				"1h": "1h",
 				"4h": "4h",
@@ -30,27 +40,37 @@ export const longShortRatioTool = {
 			};
 			const interval = intervalMap[params.period || "24h"];
 
-			const data = await svc.getLongShortAccountRatioHistory({
+			const points = (await svc.getLongShortAccountRatioHistory({
 				symbol,
 				exchange: params.exchange,
 				interval,
-				limit: 1,
-			});
-			const entry: any = Array.isArray((data as any).data)
-				? (data as any).data[0]
-				: (data as any).data;
+				limit: 100,
+			})) as GlobalAccountRatioPoint[];
 
-			const longRate = Number(entry?.longRate || 0);
-			const shortRate = Number(entry?.shortRate || 0);
+			if (params.prettyFormat !== false) {
+				return convertLsrToPretty(symbol, points);
+			}
 
-			const summary = dedent`
-				Long/Short Ratio for ${symbol}:
-				Long: ${(longRate * 100).toFixed(1)}% | Short: ${(shortRate * 100).toFixed(1)}%
-			`;
-
-			return `${summary}\n\n${JSON.stringify({ raw: data }, null, 2)}`;
+			return `${JSON.stringify({ raw: points }, null, 2)}`;
 		} catch (error) {
 			return `Error fetching long/short ratio: ${error}`;
 		}
 	},
 };
+
+function convertLsrToPretty(
+	symbol: string,
+	points: GlobalAccountRatioPoint[],
+): string {
+	const latest = points[points.length - 1];
+	const longPercent = Number(latest?.global_account_long_percent ?? 0);
+	const shortPercent = Number(latest?.global_account_short_percent ?? 0);
+	const ratio = Number(latest?.global_account_long_short_ratio ?? 0);
+
+	const summary = dedent`
+				Long/Short Ratio for ${symbol}:
+				Long: ${longPercent.toFixed(2)}% | Short: ${shortPercent.toFixed(2)}% | Ratio: ${ratio.toFixed(2)}
+			`;
+
+	return `${summary}\n\n${JSON.stringify({ latest, points }, null, 2)}`;
+}
